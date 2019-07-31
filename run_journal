@@ -1,0 +1,44 @@
+#!/bin/bash
+
+child_pids=[]
+trap kill_babies SIGINT SIGTERM
+
+kill_babies ()
+{
+    echo "Cleaning up child processes (aka killing babies)"
+    for pid in ${child_pids[@]}; do
+      kill -TERM "$pid" 2>/dev/null
+      echo "$pid was terminated successfully"
+    done
+}
+
+
+echo "Starting authorization service..."
+bash -c ./journal_auth/._run_child &
+child_pids[0]=$!
+if [[ -n ${child_pids[0]} ]]; then
+  echo "SUCCESS"
+else
+  echo "ERROR: go yell at Matt"
+fi
+
+echo "Starting permission groups service..."
+bash -c ./journal_groups/._run_child &
+child_pids[1]=$!
+if [[ -n ${child_pids[1]} ]]; then
+  echo "SUCCESS"
+else
+  echo "ERROR: go yell at Matt"
+fi
+
+echo "Starting measurement API..."
+bash -c ./journal_measurements/._run_child &
+child_pids[2]=$!
+if [[ -n ${child_pids[2]} ]]; then
+  echo "SUCCESS"
+else
+  echo "ERROR: go yell at Matt"
+fi
+
+echo "Starting up React!"
+bash -c ./journal_react/._run_child
